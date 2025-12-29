@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KnowledgeBot | AI Study Companion</title>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary-blue: #2563eb;
+            --dark-blue: #1e3a8a;
+            --light-blue: #eff6ff;
+            --sidebar-bg: #0f172a;
+            --text-main: #1e293b;
+            --white: #ffffff;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: #cbd5e1;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .app-container {
+            width: 95vw;
+            height: 90vh;
+            max-width: 1200px;
+            background: var(--white);
+            display: flex;
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: var(--sidebar-bg);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            transition: transform 0.3s ease, width 0.3s ease, padding 0.3s ease;
+            position: relative;
+            z-index: 20;
+        }
+
+        .sidebar.hidden {
+            width: 0;
+            padding: 0;
+            overflow: hidden;
+            transform: translateX(-100%);
+        }
+
+        .brand-sidebar {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            min-width: 200px;
+        }
+
+        .brand-sidebar h2 {
+            font-size: 1.25rem;
+            color: #60a5fa;
+        }
+
+        .sidebar-btn {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            margin-bottom: 0.75rem;
+            min-width: 200px;
+            font-weight: 500;
+        }
+
+        .new-chat-btn { background: rgba(255, 255, 255, 0.1); }
+        .new-chat-btn:hover { background: rgba(255, 255, 255, 0.2); }
+
+        .gemini-sidebar-btn {
+            background: linear-gradient(135deg, #4f46e5, #9333ea);
+            border: none;
+            box-shadow: 0 4px 15px rgba(147, 51, 234, 0.3);
+        }
+
+        .history-section {
+            flex: 1;
+            overflow-y: auto;
+            min-width: 200px;
+            margin-top: 1rem;
+        }
+
+        .history-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #94a3b8;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .history-item {
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #cbd5e1;
+        }
+
+        .history-item:hover { background: rgba(255, 255, 255, 0.1); color: white; }
+        .history-item.active { background: rgba(255, 255, 255, 0.15); color: white; border-left: 3px solid #60a5fa; }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--light-blue);
+            position: relative;
+        }
+
+        .top-bar {
+            height: 80px;
+            background: var(--white);
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .nav-brand-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--dark-blue);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .pomodoro-container {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            background: #f8fafc;
+            padding: 0.5rem 1.25rem;
+            border-radius: 9999px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .timer-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+            min-width: 80px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .chat-window {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 1rem 1.25rem;
+            line-height: 1.5;
+            animation: fadeIn 0.3s ease;
+            border-radius: 1.25rem;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .bot-msg { align-self: flex-start; background: var(--white); box-shadow: var(--shadow); border-bottom-left-radius: 0; }
+        .user-msg { align-self: flex-end; background: var(--primary-blue); color: white; border-bottom-right-radius: 0; }
+
+        .loading-bubble {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: var(--white);
+            border-radius: 1rem;
+            color: var(--primary-blue);
+            font-size: 0.875rem;
+            align-self: flex-start;
+            margin: 0 0 1rem 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .input-wrapper {
+            padding: 1.5rem 2rem;
+            background: var(--white);
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 1rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .input-container input {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border-radius: 9999px;
+            border: 2px solid #e2e8f0;
+            outline: none;
+        }
+
+        .icon-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: none;
+            background: #f1f5f9;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+        }
+
+        .send-btn { background: var(--primary-blue); color: white; }
+        .animate-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <aside class="sidebar" id="sidebar">
+        <div class="brand-sidebar">
+            <i data-lucide="brain-circuit" style="color: #60a5fa"></i>
+            <h2>KnowledgeBot</h2>
+        </div>
+        <button class="sidebar-btn new-chat-btn" id="newChatBtn">
+            <i data-lucide="plus" size="18"></i> New Session
+        </button>
+        <button class="sidebar-btn gemini-sidebar-btn" id="studyPlanBtn">
+            <i data-lucide="sparkles" size="18"></i> Generate Study Plan
+        </button>
+        <div class="history-section">
+            <span class="history-label">History</span>
+            <div id="historyList"></div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-bar">
+            <div class="nav-left">
+                <button class="icon-btn" id="toggleSidebar"><i data-lucide="menu"></i></button>
+                <div class="nav-brand-title">
+                    <i data-lucide="brain-circuit" size="24" style="color: var(--primary-blue)"></i>
+                    KnowledgeBot
+                </div>
+            </div>
+            <div class="pomodoro-container">
+                <span class="timer-text" id="timerDisplay">25:00</span>
+                <button class="icon-btn" id="toggleTimer" title="Start/Stop Timer">
+                    <i data-lucide="play" id="timerIcon"></i>
+                </button>
+            </div>
+        </header>
+
+        <section class="chat-window" id="chatWindow">
+            <div class="message bot-msg">Hello! I'm KnowledgeBot. How can I help you study today?</div>
+        </section>
+
+        <div id="loadingBubble" class="loading-bubble">
+            <i data-lucide="loader-2" class="animate-spin" size="16"></i> KnowledgeBot is thinking...
+        </div>
+
+        <footer class="input-wrapper">
+            <div class="input-container">
+                <input type="text" id="userInput" placeholder="Ask a study question..." autocomplete="off">
+                <button class="icon-btn send-btn" id="sendBtn"><i data-lucide="send"></i></button>
+            </div>
+        </footer>
+    </main>
+</div>
+
+<script>
+    lucide.createIcons();
+
+    // Elements
+    const chatWindow = document.getElementById('chatWindow');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const loadingBubble = document.getElementById('loadingBubble');
+    const sidebar = document.getElementById('sidebar');
+    const toggleSidebar = document.getElementById('toggleSidebar');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const toggleTimerBtn = document.getElementById('toggleTimer');
+    const timerIcon = document.getElementById('timerIcon');
+    const historyList = document.getElementById('historyList');
+    const newChatBtn = document.getElementById('newChatBtn');
+    const studyPlanBtn = document.getElementById('studyPlanBtn');
+
+    // State
+    let timerInterval;
+    let timeLeft = 25 * 60;
+    let isTimerRunning = false;
+    let chatHistory = [];
+    let currentSessionId = Date.now();
+
+    // --- AI Logic ---
+    const apiKey = "AIzaSyD1WyHPpPe6rITaAVmiL7QjC5K223bwXvs"; 
+    
+    async function callGemini(prompt, isSystemAction = false) {
+        const systemPrompt = isSystemAction 
+            ? "You are KnowledgeBot. Generate a detailed, structured study plan for the user's topic. Use bullet points and clear headings."
+            : "You are KnowledgeBot, a friendly and highly knowledgeable AI study companion. Keep responses concise but thorough.";
+        
+        let retries = 0;
+        const maxRetries = 5;
+        
+        while (retries < maxRetries) {
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    })
+                });
+
+                if (!response.ok) throw new Error('API Error');
+                const data = await response.json();
+                return data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm sorry, I couldn't process that.";
+            } catch (error) {
+                retries++;
+                if (retries === maxRetries) throw error;
+                await new Promise(resolve => setTimeout(resolve, Math.pow(2, retries) * 1000));
+            }
+        }
+    }
+
+    // --- Chat Logic ---
+    function addMessage(text, sender, skipSave = false) {
+        const div = document.createElement('div');
+        div.className = `message ${sender}-msg`;
+        div.innerText = text;
+        chatWindow.appendChild(div);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+
+        if (!skipSave) {
+            saveToHistory(text, sender);
+        }
+    }
+
+    async function sendMessage() {
+        const message = userInput.value.trim();
+        if (!message) return;
+
+        addMessage(message, 'user');
+        userInput.value = '';
+        loadingBubble.style.display = 'flex';
+
+        try {
+            const aiResponse = await callGemini(message);
+            loadingBubble.style.display = 'none';
+            addMessage(aiResponse, 'bot');
+        } catch (error) {
+            loadingBubble.style.display = 'none';
+            addMessage("I'm having trouble connecting to my brain right now. Please try again.", 'bot');
+        }
+    }
+
+    // --- History & Session Management ---
+    function saveToHistory(text, sender) {
+        let session = chatHistory.find(s => s.id === currentSessionId);
+        if (!session) {
+            session = { id: currentSessionId, title: text.substring(0, 30) + '...', messages: [] };
+            chatHistory.unshift(session);
+        }
+        session.messages.push({ text, sender });
+        renderHistory();
+    }
+
+    function renderHistory() {
+        historyList.innerHTML = '';
+        chatHistory.forEach(session => {
+            const item = document.createElement('div');
+            item.className = `history-item ${session.id === currentSessionId ? 'active' : ''}`;
+            item.innerHTML = `<i data-lucide="message-square" size="14"></i> ${session.title}`;
+            item.onclick = () => loadSession(session.id);
+            historyList.appendChild(item);
+        });
+        lucide.createIcons();
+    }
+
+    function loadSession(id) {
+        currentSessionId = id;
+        const session = chatHistory.find(s => s.id === id);
+        chatWindow.innerHTML = '';
+        session.messages.forEach(msg => addMessage(msg.text, msg.sender, true));
+        renderHistory();
+    }
+
+    function startNewSession() {
+        currentSessionId = Date.now();
+        chatWindow.innerHTML = '<div class="message bot-msg">New session started! What are we studying today?</div>';
+        renderHistory();
+    }
+
+    async function generateStudyPlan() {
+        const topic = prompt("What subject or topic do you want a study plan for?");
+        if (!topic) return;
+
+        loadingBubble.style.display = 'flex';
+        addMessage(`Generating a study plan for: ${topic}`, 'user');
+        
+        try {
+            const plan = await callGemini(`Create a 7-day study plan for: ${topic}`, true);
+            loadingBubble.style.display = 'none';
+            addMessage(plan, 'bot');
+        } catch (error) {
+            loadingBubble.style.display = 'none';
+            addMessage("Failed to generate study plan. Please try again.", 'bot');
+        }
+    }
+
+    // --- Timer Logic ---
+    function updateTimerDisplay() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function toggleTimer() {
+        if (isTimerRunning) {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            timerIcon.setAttribute('data-lucide', 'play');
+        } else {
+            isTimerRunning = true;
+            timerIcon.setAttribute('data-lucide', 'pause');
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    isTimerRunning = false;
+                    timeLeft = 25 * 60;
+                    timerIcon.setAttribute('data-lucide', 'rotate-ccw');
+                    addMessage("✨ Focus session complete! Time for a break.", "bot");
+                    lucide.createIcons();
+                }
+            }, 1000);
+        }
+        lucide.createIcons();
+    }
+
+    // --- Listeners ---
+    sendBtn.addEventListener('click', sendMessage);
+    userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+    toggleSidebar.addEventListener('click', () => sidebar.classList.toggle('hidden'));
+    toggleTimerBtn.addEventListener('click', toggleTimer);
+    newChatBtn.addEventListener('click', startNewSession);
+    studyPlanBtn.addEventListener('click', generateStudyPlan);
+
+    // Init
+    updateTimerDisplay();
+</script>
+</body>
+</html>
